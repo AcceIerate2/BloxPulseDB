@@ -21,6 +21,16 @@ def remove_bulk():
     for universeId, data in dataReceived.items():
         dbHandler.remove(universeId, data)
 
+@app.route('/get_database', methods=["GET"])
+def get_database():
+    dataToReturn = []
+    try:
+        dataToReturn = dbHandler.getAll()
+    except:
+        pass
+    
+    return jsonify(dataToReturn)
+
 @app.route('/', methods=['GET'])
 def index():
     return "Hello, World!"
