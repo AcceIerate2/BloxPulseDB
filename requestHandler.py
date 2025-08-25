@@ -13,12 +13,18 @@ def schedule_task():
 
     return response
 
+@app.route('/bulk_remove', methods=['POST'])
 def remove_bulk():
     dataReceived: dict = request.get_json()
     if not type(dataReceived) == dict: return
 
     for universeId, data in dataReceived.items():
         dbHandler.remove(universeId, data)
+
+@app.route('/', methods=['GET'])
+def index():
+    return "Hello, World!"
+    
 
 if __name__ == "__main__":
     app.run(debug=False)
