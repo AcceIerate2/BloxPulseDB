@@ -22,7 +22,7 @@ def get_conn():
         pass
     return conn
 
-def getDue(now_ts: float | None = None) -> list[dict]:
+def getDue(now_ts):
     if now_ts is None:
         now_ts = time.time()  # current UTC seconds
     try:
