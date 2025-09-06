@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import dbHandler
 
+dbHandler.init_db()
 app = Flask(__name__)
 
 @app.route('/schedule', methods=['POST'])
