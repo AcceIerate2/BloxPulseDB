@@ -12,7 +12,7 @@ def schedule_task():
     universeId = dataReceived.get('universeId')
     response = dbHandler.insert(universeId, dataReceived)
 
-    return response
+    return "Success"
 
 @app.route('/bulk_remove', methods=['POST'])
 def remove_bulk():
@@ -24,6 +24,8 @@ def remove_bulk():
             continue
 
         dbHandler.remove(universeId, data)
+
+    return "Success"
 
 @app.route('/get_database', methods=["GET"])
 def get_database():
