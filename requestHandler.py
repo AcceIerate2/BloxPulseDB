@@ -1,38 +1,94 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response, g
 import dbHandler
+import logging
+import time
+from werkzeug.exceptions import ClientDisconnected
+from functools import wraps
 
+# Configure logging
+logging.basicConfig(
+    filename='bloxpulse.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Initialize database
 dbHandler.init_db()
 app = Flask(__name__)
 
+def log_request_time(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        start_time = time.time()
+        response = f(*args, **kwargs)
+        duration = time.time() - start_time
+        # Log if request takes more than 1 second
+        if duration > 1:
+            logger.warning(f"Slow request to {request.path}: {duration:.2f}s")
+        return response
+    return decorated_function
+
+@app.errorhandler(ClientDisconnected)
+def client_disconnected(e):
+    logger.info("Client disconnected prematurely")
+    return Response(status=499)  # Client Closed Request
+
 @app.route('/schedule', methods=['POST'])
+@log_request_time
 def schedule_task():
-    dataReceived = request.get_json()
-    if not type(dataReceived) == dict: return
+    try:
+        # Process request quickly to minimize connection time
+        dataReceived = request.get_json(silent=True)
+        if not dataReceived or not isinstance(dataReceived, dict):
+            return Response("Invalid data format", status=400, content_type='text/plain')
 
-    universeId = dataReceived.get('universeId')
-    response = dbHandler.insert(universeId, dataReceived)
+        universeId = dataReceived.get('universeId')
+        if not universeId:
+            return Response("Invalid data", status=400, content_type='text/plain')
 
-    return "Success"
+        # Do database operation
+        if dbHandler.insert(universeId, dataReceived):
+            return Response("Success", status=200, content_type='text/plain')
+        return Response("Error", status=500, content_type='text/plain')
+
+    except ClientDisconnected:
+        logger.info("Client disconnected during schedule operation")
+        return Response(status=499)
+    except Exception as e:
+        logger.error(f"Schedule task error: {str(e)}")
+        return Response("Error", status=500, content_type='text/plain')
 
 @app.route('/bulk_remove', methods=['POST'])
+@log_request_time
 def remove_bulk():
-    dataReceived: list = request.get_json()
+    try:
+        dataReceived = request.get_json(silent=True)
+        if not isinstance(dataReceived, list):
+            return Response("Invalid data format", status=400, content_type='text/plain')
 
-    for data in dataReceived:
-        universeId = data["universeId"]
-        if not universeId:
-            continue
+        for data in dataReceived:
+            universeId = data.get("universeId")
+            if not universeId:
+                continue
+            dbHandler.remove(universeId, data)
 
-        dbHandler.remove(universeId, data)
-
-    return "Success"
+        return Response("Success", status=200, content_type='text/plain')
+    except ClientDisconnected:
+        logger.info("Client disconnected during bulk remove operation")
+        return Response(status=499)
+    except Exception as e:
+        logger.error(f"Bulk remove error: {str(e)}")
+        return Response("Error", status=500, content_type='text/plain')
 
 @app.route('/get_database', methods=["GET"])
+@log_request_time
 def get_database():
     dataToReturn = []
     try:
         dataToReturn = dbHandler.getAll()
-    except:
+    except Exception as e:
+        logger.error(f"Get database error: {str(e)}")
         pass
     
     return jsonify(dataToReturn)
@@ -40,9 +96,6 @@ def get_database():
 @app.route('/', methods=['GET'])
 def index():
     return "Hello, World!"
-    
 
-if __name__ == "__main__":
-    app.run(debug=False)
-    
-
+#if __name__ == "__main__":
+    #app.run(debug=False)
