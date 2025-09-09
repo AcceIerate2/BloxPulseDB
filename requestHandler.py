@@ -67,13 +67,11 @@ def remove_bulk():
         if not isinstance(dataReceived, list):
             return Response("Invalid data format", status=400, content_type='text/plain')
 
-        for data in dataReceived:
-            universeId = data.get("universeId")
-            if not universeId:
-                continue
-            dbHandler.remove(universeId, data)
-
-        return Response("Success", status=200, content_type='text/plain')
+        # Perform bulk deletion in dbHandler using executemany
+        ok = dbHandler.remove_bulk(dataReceived)
+        if ok:
+            return Response("Success", status=200, content_type='text/plain')
+        return Response("Error", status=500, content_type='text/plain')
     except ClientDisconnected:
         logger.info("Client disconnected during bulk remove operation")
         return Response(status=499)

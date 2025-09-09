@@ -160,6 +160,56 @@ def remove(universeId: str, data: dict):
                 return_conn(conn)
     return False
 
+def remove_bulk(dataReceived: list[dict]):
+    """Remove multiple notifications in a single batch operation.
+
+    Expects a list of dicts where each item may contain:
+    - universeId (required)
+    - key (optional)
+    - time (optional)
+    """
+    if not isinstance(dataReceived, list):
+        return False
+
+    # Build parameters list, skipping entries without universeId
+    params = []
+    for d in dataReceived:
+        if not isinstance(d, dict):
+            continue
+        universeId = d.get("universeId")
+        if not universeId:
+            continue
+        params.append((universeId, d.get("key"), d.get("time")))
+
+    # Nothing to delete; treat as success
+    if not params:
+        return True
+
+    retries = 3
+    conn = None
+    while retries > 0:
+        try:
+            conn = get_conn()
+            if conn is None:
+                return False
+
+            conn.executemany(
+                "DELETE FROM notifications WHERE universeId = ? AND key = ? AND time = ?",
+                params,
+            )
+            conn.commit()
+            return True
+        except sqlite3.Error as e:
+            retries -= 1
+            if retries == 0:
+                logging.error(f"Database bulk remove error after 3 retries: {str(e)}")
+                return False
+            time.sleep(1)
+        finally:
+            if conn:
+                return_conn(conn)
+    return False
+
 def getAll() -> list[dict]:
     global last_cache_time, cached_due
     current_time = time.time()
