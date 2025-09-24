@@ -46,7 +46,7 @@ def schedule_task():
         universeId = dataReceived.get('universeId')
         if not universeId:
             return Response("Invalid data", status=400, content_type='text/plain')
-
+        
         # Do database operation
         if dbHandler.insert(universeId, dataReceived):
             return Response("Success", status=200, content_type='text/plain')

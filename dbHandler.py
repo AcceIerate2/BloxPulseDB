@@ -107,6 +107,7 @@ def insert(universeId: str, data: dict):
             if conn is None:
                 return False
             
+            # Insert original notification
             conn.execute(
                 "INSERT OR IGNORE INTO notifications VALUES (?, ?, ?, ?, ?, ?)", 
                 (
@@ -118,6 +119,20 @@ def insert(universeId: str, data: dict):
                     data.get("api_key")
                 )
             )
+
+            # Insert 7-day retention notification with modified key and ID
+            conn.execute(
+                "INSERT OR IGNORE INTO notifications VALUES (?, ?, ?, ?, ?, ?)", 
+                (
+                    universeId, 
+                    data.get("key") + "_day7",  # Modified key to avoid conflicts
+                    data.get("notificationId") + "_day7",  # Modified ID to avoid conflicts
+                    data.get("time") + (86400 * 6),  # 6 days later because "time" is already 86400 seconds in the future (the client calculates it)
+                    data.get("message"), 
+                    data.get("api_key")
+                )
+            )
+
             conn.commit()
             return True
         except sqlite3.Error as e:
