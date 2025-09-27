@@ -65,8 +65,7 @@ def schedule_task():
 def remove_bulk():
     auth_key = request.args.get("auth")
     if not auth_key or auth_key != os.getenv("AUTH_KEY"):
-        # temp
-        return Response(f"Access Denied. {auth_key}", status=401, content_type='text/plain')
+        return Response(f"Access Denied.", status=401, content_type='text/plain')
     
     try:
         dataReceived = request.get_json(silent=True)
