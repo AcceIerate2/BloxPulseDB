@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify, Response, g
+from flask import Flask, request, jsonify, Response
 import dbHandler
 import logging
 import time
 from werkzeug.exceptions import ClientDisconnected
 from functools import wraps
+import os
 
 # Configure logging
 logging.basicConfig(
@@ -62,6 +63,10 @@ def schedule_task():
 @app.route('/bulk_remove', methods=['POST'])
 @log_request_time
 def remove_bulk():
+    auth_key = request.args.get("auth")
+    if auth_key != os.getenv("AUTH_KEY"):
+        return Response("Access Denied.", status=401, content_type='text/plain')
+    
     try:
         dataReceived = request.get_json(silent=True)
         if not isinstance(dataReceived, list):
