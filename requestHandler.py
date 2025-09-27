@@ -87,6 +87,10 @@ def remove_bulk():
 @app.route('/get_database', methods=["GET"])
 @log_request_time
 def get_database():
+    auth_key = request.args.get("auth")
+    if auth_key != os.getenv("AUTH_KEY"):
+        return Response("Access Denied.", status=401, content_type='text/plain')
+
     dataToReturn = []
     try:
         dataToReturn = dbHandler.getAll()
