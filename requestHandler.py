@@ -64,7 +64,7 @@ def schedule_task():
 @log_request_time
 def remove_bulk():
     auth_key = request.args.get("auth")
-    if auth_key != os.getenv("AUTH_KEY"):
+    if not auth_key or auth_key != os.getenv("AUTH_KEY"):
         return Response("Access Denied.", status=401, content_type='text/plain')
     
     try:
@@ -88,7 +88,7 @@ def remove_bulk():
 @log_request_time
 def get_database():
     auth_key = request.args.get("auth")
-    if auth_key != os.getenv("AUTH_KEY"):
+    if not auth_key or auth_key != os.getenv("AUTH_KEY"):
         return Response("Access Denied.", status=401, content_type='text/plain')
 
     dataToReturn = []
