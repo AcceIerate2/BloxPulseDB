@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify, Response
+from dotenv import load_dotenv
 import dbHandler
 import logging
 import time
 from werkzeug.exceptions import ClientDisconnected
 from functools import wraps
 import os
+
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
