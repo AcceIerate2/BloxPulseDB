@@ -128,7 +128,7 @@ def insert(universeId: str, data: dict):
                     data.get("key") + "_day7",  # Modified key to avoid conflicts
                     data.get("notificationId") + "_day7",  # Modified ID to avoid conflicts
                     data.get("time") + (86400 * 6),  # 6 days later because "time" is already 86400 seconds in the future (the client calculates it)
-                    data.get("message"), 
+                    "👋 It’s been a while-want to jump back in?", 
                     data.get("api_key")
                 )
             )
